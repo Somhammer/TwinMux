@@ -582,6 +582,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
     outDir = args.output
 
+    if not os.path.exists(outDir):
+        os.makedirs(outDir)
+    if not os.path.exists('./pdf'):
+        os.makedirs('./pdf')
+
     global name_RPCbit
     global nStation
     global nWheel
@@ -613,8 +618,7 @@ if __name__ == '__main__':
         makeHist(argParser(tmp1, tmp2, tmp3, outDir))
         
         quit() 
-
-    """
+    
     list_input = []
     for index, item_dir in enumerate(list_dataDir):
         for item in os.listdir(item_dir):
@@ -626,10 +630,9 @@ if __name__ == '__main__':
         pool.map(makeHist, [argParser(item_dir, list_emulDir[index], item, outDir) for item in list_input])
         pool.close()
         pool.join()
-    """
     
-    #cmd = ['hadd', str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root'] + glob.glob(outDir+'/*')
-    #subprocess.call(cmd)
+    cmd = ['hadd', str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root'] + glob.glob(outDir+'/*')
+    subprocess.call(cmd)
     drawHist(outDir+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root', outDir)
     
     print "Total running time: %s" % (time.time() - start_time)
