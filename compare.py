@@ -327,51 +327,6 @@ def makeHist(args):
     h_nSegmentPerChamberEmul2.SetName(h_nSegmentPerChamberEmul.GetName()+'_exceptSeg0')
     h_nSegmentPerChamberEmul2.SetBinContent(1,0)
 
-    for i in range(len(name_RPCbit)):
-        h_ltTwinMuxOut_phi_offdig = h2_ltTwinMuxOut_phi[i].ProjectionX()
-        for iBin in range(1,h_ltTwinMuxOut_phi_offdig.GetNbinsX()+1):
-            tmp = h2_ltTwinMuxOut_phi[i].GetBinContent(iBin, iBin)
-            tmp2 = h_ltTwinMuxOut_phi_offdig.GetBinContent(iBin)
-            if tmp2 != 0 :
-                value = ((tmp2 - tmp) / tmp2) * 100
-            else:
-                value = 0
-            h_ltTwinMuxOut_phi_offdig.SetBinContent(iBin, value)
-        h_ltTwinMuxOut_phi_offdig.SetName('h_ltTwinMuxOut_phi_offDig_'+str(name_RPCbit[i]))
-
-        h_ltTwinMuxOut_phiB_offdig = h2_ltTwinMuxOut_phiB[i].ProjectionX()
-        for iBin in range(1,h_ltTwinMuxOut_phiB_offdig.GetNbinsX()+1):
-            tmp = h2_ltTwinMuxOut_phiB[i].GetBinContent(iBin, iBin)
-            tmp2 = h_ltTwinMuxOut_phiB_offdig.GetBinContent(iBin)
-            if tmp2 != 0 :
-                value = ((tmp2 - tmp) / tmp2) * 100
-            else:
-                value = 0
-            h_ltTwinMuxOut_phiB_offdig.SetBinContent(iBin, value)
-        h_ltTwinMuxOut_phiB_offdig.SetName('h_ltTwinMuxOut_phiB_offDig_'+str(name_RPCbit[i]))
- 
-        h_ltTwinMuxOut_posLoc_x_offdig = h2_ltTwinMuxOut_posLoc_x[i].ProjectionX()
-        for iBin in range(1,h_ltTwinMuxOut_posLoc_x_offdig.GetNbinsX()+1):
-            tmp = h2_ltTwinMuxOut_posLoc_x[i].GetBinContent(iBin, iBin)
-            tmp2 = h_ltTwinMuxOut_posLoc_x_offdig.GetBinContent(iBin)
-            if tmp2 != 0 :
-                value = ((tmp2 - tmp) / tmp2) * 100
-            else:
-                value = 0
-            h_ltTwinMuxOut_posLoc_x_offdig.SetBinContent(iBin, value)
-        h_ltTwinMuxOut_posLoc_x_offdig.SetName('h_ltTwinMuxOut_posLoc_x_offDig_'+str(name_RPCbit[i]))
-     
-        h_ltTwinMuxOut_dirLoc_phi_offdig = h2_ltTwinMuxOut_dirLoc_phi[i].ProjectionX()
-        for iBin in range(1,h_ltTwinMuxOut_dirLoc_phi_offdig.GetNbinsX()+1):
-            tmp = h2_ltTwinMuxOut_dirLoc_phi[i].GetBinContent(iBin, iBin)
-            tmp2 = h_ltTwinMuxOut_dirLoc_phi_offdig.GetBinContent(iBin)
-            if tmp2 != 0 :
-                value = ((tmp2 - tmp) / tmp2) * 100
-            else:
-                value = 0
-            h_ltTwinMuxOut_dirLoc_phi_offdig.SetBinContent(iBin, value)
-        h_ltTwinMuxOut_dirLoc_phi_offdig.SetName('h_ltTwinMuxOut_dirLoc_phi_offDig_'+str(name_RPCbit[i]))
-   
     f_out.Write()
     f_out.Close()
     print "End "+str(inFile)
@@ -383,7 +338,7 @@ def drawHist(inFile, outDir):
     global nSector
     global nBX
     
-    f_in = TFile.Open(inFile)
+    f_in = TFile.Open(inFile, "update")
 
     tdrstyle.setTDRStyle()
     wp = tdrstyle.tdrWorkProgress()
@@ -493,8 +448,19 @@ def drawHist(inFile, outDir):
         c.Clear()
 
     for i in range(len(name_RPCbit)):
-        print name_RPCbit[i]
-        h_ltTwinMuxOut_phi_offdig = f_in.Get('h_ltTwinMuxOut_phi_offDig_'+str(name_RPCbit[i]))
+        h2_ltTwinMuxOut_phi = f_in.Get('h2_ltTwinMuxOut_phi_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_phi_offdig = h2_ltTwinMuxOut_phi.ProjectionX()
+        for iBin in range(1,h_ltTwinMuxOut_phi_offdig.GetNbinsX()+1):
+            tmp = h2_ltTwinMuxOut_phi.GetBinContent(iBin, iBin)
+            tmp2 = h_ltTwinMuxOut_phi_offdig.GetBinContent(iBin)
+            if tmp2 != 0 :
+                value = ((tmp2 - tmp) / tmp2) * 100
+            else:
+                value = 0
+            h_ltTwinMuxOut_phi_offdig.SetBinContent(iBin, value)
+        h_ltTwinMuxOut_phi_offdig.SetName('h_ltTwinMuxOut_phi_offDig_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_phi_offdig.Write()
+
         h_ltTwinMuxOut_phi_offdig.GetYaxis().SetTitleFont(42)
         h_ltTwinMuxOut_phi_offdig.GetYaxis().SetTitle('Off diagonal(%)')
         h_ltTwinMuxOut_phi_offdig.GetYaxis().SetTitleSize(0.038)
@@ -506,7 +472,19 @@ def drawHist(inFile, outDir):
         c.Print('./pdf/h_ltTwinMuxOut_phi_offDig_'+name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
 
-        h_ltTwinMuxOut_phiB_offdig = f_in.Get('h_ltTwinMuxOut_phiB_offDig_'+str(name_RPCbit[i]))
+        h2_ltTwinMuxOut_phiB = f_in.Get('h2_ltTwinMuxOut_phiB_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_phiB_offdig = h2_ltTwinMuxOut_phiB.ProjectionX()
+        for iBin in range(1,h_ltTwinMuxOut_phiB_offdig.GetNbinsX()+1):
+            tmp = h2_ltTwinMuxOut_phiB.GetBinContent(iBin, iBin)
+            tmp2 = h_ltTwinMuxOut_phiB_offdig.GetBinContent(iBin)
+            if tmp2 != 0 :
+                value = ((tmp2 - tmp) / tmp2) * 100
+            else:
+                value = 0
+            h_ltTwinMuxOut_phiB_offdig.SetBinContent(iBin, value)
+        h_ltTwinMuxOut_phiB_offdig.SetName('h_ltTwinMuxOut_phiB_offDig_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_phiB_offdig.Write()
+
         h_ltTwinMuxOut_phiB_offdig.GetYaxis().SetTitleFont(42)
         h_ltTwinMuxOut_phiB_offdig.GetYaxis().SetTitle('Off diagonal(%)')
         h_ltTwinMuxOut_phiB_offdig.GetYaxis().SetTitleSize(0.038)
@@ -517,7 +495,20 @@ def drawHist(inFile, outDir):
         wp.Draw('same')
         c.Print('./pdf/h_ltTwinMuxOut_phiB_offDig_'+name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
-      
+ 
+        h2_ltTwinMuxOut_posLoc_x = f_in.Get('h2_ltTwinMuxOut_posLoc_x_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_posLoc_x_offdig = h2_ltTwinMuxOut_posLoc_x.ProjectionX()
+        for iBin in range(1,h_ltTwinMuxOut_posLoc_x_offdig.GetNbinsX()+1):
+            tmp = h2_ltTwinMuxOut_posLoc_x.GetBinContent(iBin, iBin)
+            tmp2 = h_ltTwinMuxOut_posLoc_x_offdig.GetBinContent(iBin)
+            if tmp2 != 0 :
+                value = ((tmp2 - tmp) / tmp2) * 100
+            else:
+                value = 0
+            h_ltTwinMuxOut_posLoc_x_offdig.SetBinContent(iBin, value)
+        h_ltTwinMuxOut_posLoc_x_offdig.SetName('h_ltTwinMuxOut_posLoc_x_offDig_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_posLoc_x_offdig.Write()
+    
         h_ltTwinMuxOut_posLoc_x_offdig = f_in.Get('h_ltTwinMuxOut_posLoc_x_offDig_'+str(name_RPCbit[i]))
         h_ltTwinMuxOut_posLoc_x_offdig.GetYaxis().SetTitleFont(42)
         h_ltTwinMuxOut_posLoc_x_offdig.GetYaxis().SetTitle('Off diagonal(%)')
@@ -530,7 +521,19 @@ def drawHist(inFile, outDir):
         c.Print('./pdf/h_ltTwinMuxOut_posLoc_x_offDig_'+name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
 
-        h_ltTwinMuxOut_dirLoc_phi_offdig = f_in.Get('h_ltTwinMuxOut_dirLoc_phi_offDig_'+str(name_RPCbit[i]))
+        h2_ltTwinMuxOut_dirLoc_phi = f_in.Get('h2_ltTwinMuxOut_dirLoc_phi_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_dirLoc_phi_offdig = h2_ltTwinMuxOut_dirLoc_phi.ProjectionX()
+        for iBin in range(1,h_ltTwinMuxOut_dirLoc_phi_offdig.GetNbinsX()+1):
+            tmp = h2_ltTwinMuxOut_dirLoc_phi.GetBinContent(iBin, iBin)
+            tmp2 = h_ltTwinMuxOut_dirLoc_phi_offdig.GetBinContent(iBin)
+            if tmp2 != 0 :
+                value = ((tmp2 - tmp) / tmp2) * 100
+            else:
+                value = 0
+            h_ltTwinMuxOut_dirLoc_phi_offdig.SetBinContent(iBin, value)
+        h_ltTwinMuxOut_dirLoc_phi_offdig.SetName('h_ltTwinMuxOut_dirLoc_phi_offDig_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_dirLoc_phi_offdig.Write()
+ 
         h_ltTwinMuxOut_dirLoc_phi_offdig.GetYaxis().SetTitleFont(42)
         h_ltTwinMuxOut_dirLoc_phi_offdig.GetYaxis().SetTitle('Off diagonal(%)')
         h_ltTwinMuxOut_dirLoc_phi_offdig.GetYaxis().SetTitleSize(0.038)
@@ -541,7 +544,8 @@ def drawHist(inFile, outDir):
         wp.Draw('same')
         c.Print('./pdf/h_ltTwinMuxOut_dirLoc_phi_offDig_'+name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
-
+  
+    for i in range(len(name_RPCbit)):
         gPad.SetRightMargin(0.12)
         h2_ltTwinMuxOut_phi = f_in.Get('h2_ltTwinMuxOut_phi_'+name_RPCbit[i])
         h2_ltTwinMuxOut_phi.Draw('colz')
@@ -618,7 +622,7 @@ if __name__ == '__main__':
         makeHist(argParser(tmp1, tmp2, tmp3, outDir))
         
         quit() 
-    
+    """ 
     list_input = []
     for index, item_dir in enumerate(list_dataDir):
         for item in os.listdir(item_dir):
@@ -633,6 +637,7 @@ if __name__ == '__main__':
     
     cmd = ['hadd', str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root'] + glob.glob(outDir+'/*')
     subprocess.call(cmd)
+    """
     drawHist(outDir+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root', outDir)
     
     print "Total running time: %s" % (time.time() - start_time)
