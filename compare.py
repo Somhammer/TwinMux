@@ -622,7 +622,7 @@ if __name__ == '__main__':
         makeHist(argParser(tmp1, tmp2, tmp3, outDir))
         
         quit() 
-    """ 
+     
     list_input = []
     for index, item_dir in enumerate(list_dataDir):
         for item in os.listdir(item_dir):
@@ -637,7 +637,7 @@ if __name__ == '__main__':
     
     cmd = ['hadd', str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root'] + glob.glob(outDir+'/*')
     subprocess.call(cmd)
-    """
+    
     drawHist(outDir+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root', outDir)
     
     print "Total running time: %s" % (time.time() - start_time)
