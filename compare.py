@@ -1,36 +1,12 @@
 import os
 import sys
 import numpy
-import glob
-import time
-from datetime import datetime
 import multiprocessing as mp
-import argparse
-import subprocess
 
 from ROOT import *
-from tqdm import tqdm
 
 import tdrstyle
-
-def str2bool(v):
-    if v.lower() in ('yes', 'true', 't', 'y', '1', 'True'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0', 'False'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected')
-
-def printProgress(iteration, total, prefix = '', suffix = '', decimals = 1, barLength = 100):
-    nEvent = str(iteration) + '/' + str(total)
-    formatStr = "{0:." + str(decimals) + "f}"
-    percent = formatStr.format(100*(iteration/float(total)))
-    filledLength = int(round(barLength * iteration/float(total)))
-    bar = '#'*filledLength + '-'*(barLength-filledLength)
-    sys.stdout.write('\r%s |%s| %s%s %s %s' % (prefix, bar, percent, '%', suffix, nEvent)),
-    if iteration == total:
-        sys.stdout.write('\n')
-    sys.stdout.flush()
+import utils 
 
 def argParser(item_dir, emulDir, item, outDir):
     args = [item_dir, emulDir, item, outDir]
@@ -39,6 +15,7 @@ def argParser(item_dir, emulDir, item, outDir):
 
 #def makeHist(dataDir, emulDir, inFile, outDir):
 def makeHist(args):
+    
     dataDir = args[0]
     emulDir = args[1]
     inFile = args[2]
@@ -48,18 +25,17 @@ def makeHist(args):
     #    wheel, sector, station, BX
     #    quality, rpcBit, is2nd
     #    phi, phiB, posLoc_x, dirLoc_phi
+    utils.setChamberName()
+    
     global name_RPCbit
+    global name_Wheel
+    global name_Sector
+    global name_BX
+
     global nStation
     global nWheel
     global nSector
     global nBX
-
-    name_Wheel = ['W-2', 'W-1', 'W0', 'W+1', 'W+2']
-    name_Sector = [
-        'S1', 'S2', 'S3', 'S4', 'S5', 'S6',
-        'S7', 'S8', 'S9', 'S10', 'S11', 'S12']
-# We does not focus out and in in sector.
-    name_BX = ['BX-4', 'BX-3', 'BX-2', 'BX-1', 'BX0', 'BX1', 'BX2', 'BX3', 'BX4']
 
     print "Start "+str(inFile)
     f_out = TFile.Open(outDir+'/'+inFile, 'recreate')
@@ -176,14 +152,14 @@ def makeHist(args):
         h2_ltTwinMuxOut_dirLoc_phi[i].GetYaxis().SetTitle('Emul.ltTwinMuxOut_dirLoc_phi')
         h2_ltTwinMuxOut_dirLoc_phi[i].Sumw2()
     
-    for i in xrange(DTTREE_data.GetEntries()):
+    for ievt in xrange(DTTREE_data.GetEntries()):
         #printProgress(i, DTTREE_data.GetEntries(), 'Progress: ', 'Complete', 1, 25)
         
-        DTTREE_data.GetEntry(i)
-        DTTREE_emul.GetEntry(i)
+        DTTREE_data.GetEntry(ievt)
+        DTTREE_emul.GetEntry(ievt)
 
         if DTTREE_data.event_runNumber != DTTREE_emul.event_runNumber:
-            print "[WARNING] Entry: "+str(i)+" run numbers are different"
+            print "[WARNING] Entry: "+str(ievt)+" run numbers are different"
             print "==== File name: "+str(inFile)+" ===="
             print "---- Data: "+str(DTTREE_data.event_runNumber)+" ----"
             print "---- Emul: "+str(DTTREE_emul.event_runNumber)+" ----"
@@ -191,7 +167,7 @@ def makeHist(args):
             continue
 
         if DTTREE_data.event_eventNumber != DTTREE_emul.event_eventNumber:
-            print "[WARNING] Entry: "+str(i)+" event numbers are different"
+            print "[WARNING] Entry: "+str(ievt)+" event numbers are different"
             print "==== File name: "+str(inFile)+" ===="
             print "---- Data: "+str(DTTREE_data.event_eventNumber)+" ----"
             print "---- Emul: "+str(DTTREE_emul.event_eventNumber)+" ----"
@@ -234,13 +210,14 @@ def makeHist(args):
         #    print "Empty info"
 
         for i in range(DTTREE_data.ltTwinMuxOut_station.size()):
-            same_rpcBit = False
-            same_is2nd = False
-            same_station = False
-            same_wheel = False
-            same_sector = False
-            same_BX = False
             for j in range(DTTREE_emul.ltTwinMuxOut_station.size()):
+                same_rpcBit = False
+                same_is2nd = False
+                same_station = False
+                same_wheel = False
+                same_sector = False
+                same_BX = False
+
                 if DTTREE_data.ltTwinMuxOut_rpcBit[i] == DTTREE_emul.ltTwinMuxOut_rpcBit[j]:
                     same_rpcBit = True
                 if DTTREE_data.ltTwinMuxOut_is2nd[i] == DTTREE_emul.ltTwinMuxOut_is2nd[j]:
@@ -332,6 +309,8 @@ def makeHist(args):
     print "End "+str(inFile)
 
 def drawHist(inFile, outDir):
+    utils.setChamberName()
+
     global name_RPCbit
     global nStation
     global nWheel
@@ -568,78 +547,3 @@ def drawHist(inFile, outDir):
         c.Clear()
 
     f_in.Close()
-
-if __name__ == '__main__':
-    start_time = time.time()
-
-    parser = argparse.ArgumentParser(description="""
-        Comparing TwinMuxOut between unpacked data and emulated one.
-        Default outdir = ./output
-        Default dataset = Run2018D/SingleMuon/RAW-RECO/ZMu-PromptReco-v2
-    """)
-    
-    parser.add_argument('-t', '--test', required=False, type=str2bool, default=False, help='Test')
-    parser.add_argument('-i', '--input', required=False, type=str, 
-            default='/data/users/seohyun/ntuple/TwinMux/SingleMuon/', 
-            help='Set input location')
-    parser.add_argument('-o', '--output', required=False, type=str, default='output', help='Set output location')
-    args = parser.parse_args()
-    outDir = args.output
-
-    if not os.path.exists(outDir):
-        os.makedirs(outDir)
-    if not os.path.exists('./pdf'):
-        os.makedirs('./pdf')
-
-    global name_RPCbit
-    global nStation
-    global nWheel
-    global nSector
-    global nBX
-    
-    name_RPCbit = ['inclusive', 'RPCbit0', 'RPCbit1', 'RPCbit2']
-    nStation = 4 # 1 2 3 4
-    nWheel = 5 # -2 -1 0 1 2
-    nSector = 12 # 1 ~ 12
-    nBX = 9 # -4 ~ 4
-
-    list_dataDir = []
-    list_emulDir = []
-    for (path, dir, files) in os.walk(args.input):
-        depth = path.count(os.path.sep) - args.input.count(os.path.sep)
-        if depth < 2: continue
-        if 'Emulator' in path:
-            list_emulDir.append(path)
-        else:
-            list_dataDir.append(path)
-
-    print list_dataDir
-    print list_emulDir
-    if args.test:
-        tmp1 = list_dataDir[0]
-        tmp2 = list_emulDir[0]
-        tmp3 = 'DTDPGNtuple_10_3_3_ZMuSkim_2018D_53.root'
-        makeHist(argParser(tmp1, tmp2, tmp3, outDir))
-        
-        quit() 
-     
-    list_input = []
-    for index, item_dir in enumerate(list_dataDir):
-        for item in os.listdir(item_dir):
-            emulFile = item[:item.rfind('_')]+'_Emulator_'+item[:-5].split('_')[-1]+'.root' 
-            if not os.path.exists(list_emulDir[index]+'/'+emulFile):
-                print list_emulDir[index]+'/'+emulFile + "does not exist"
-            list_input.append(item)
-        pool = mp.Pool(processes=50)
-        pool.map(makeHist, [argParser(item_dir, list_emulDir[index], item, outDir) for item in list_input])
-        pool.close()
-        pool.join()
-    
-    cmd = ['hadd', str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root'] + glob.glob(outDir+'/*')
-    subprocess.call(cmd)
-    
-    drawHist(outDir+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root', outDir)
-    
-    print "Total running time: %s" % (time.time() - start_time)
-
-
