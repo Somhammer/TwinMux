@@ -11,6 +11,7 @@ import subprocess
 from ROOT import *
 
 import compare as cp
+import efficiency as ef
 import utils 
 
 if __name__ == '__main__':
@@ -21,19 +22,27 @@ if __name__ == '__main__':
         Default outdir = ./output
         Default dataset = Run2018D/SingleMuon/RAW-RECO/ZMu-PromptReco-v2
     """)
-    
-    parser.add_argument('-t', '--test', required=False, type=utils.str2bool, default=False, help='Test')
+ 
     parser.add_argument('-i', '--input', required=False, type=str, 
             default='/data/users/seohyun/ntuple/TwinMux/SingleMuon/', 
             help='Set input location')
     parser.add_argument('-o', '--output', required=False, type=str, default='output', help='Set output location')
+    parser.add_argument('-f', '--full', required=False, type=utils.str2bool, default=False, help='Run full 2018D dataset')
+    parser.add_argument('-c', '--compare', required=False, type=utils.str2bool, default=False, help='Compare unpacked data and emulator')
+    parser.add_argument('-e', '--efficiency', required=False, type=utils.str2bool, default=False, help='Calculate RPC efficiency')
+
     args = parser.parse_args()
+    if args.compare == False and args.efficiency == False:
+        print "Run full analysis"
+        args.compare = True
+        args.efficiency = True
+    
     outDir = args.output
 
     if not os.path.exists(outDir):
         os.makedirs(outDir)
-    if not os.path.exists('./pdf'):
-        os.makedirs('./pdf')
+    if not os.path.exists(outDir+'/pdf'):
+        os.makedirs(outDir+'/pdf')
 
     list_dataDir = []
     list_emulDir = []
@@ -47,29 +56,39 @@ if __name__ == '__main__':
 
     print list_dataDir
     print list_emulDir
-    if args.test:
-        tmp1 = list_dataDir[0]
-        tmp2 = list_emulDir[0]
-        tmp3 = 'DTDPGNtuple_10_3_3_ZMuSkim_2018D_53.root'
-        cp.makeHist(cp.argParser(tmp1, tmp2, tmp3, outDir))
+
+    if args.full:
+        list_input = []
+        for index, item_dir in enumerate(list_dataDir):
+            for item in os.listdir(item_dir):
+                emulFile = item[:item.rfind('_')]+'_Emulator_'+item[:-5].split('_')[-1]+'.root' 
+                if not os.path.exists(list_emulDir[index]+'/'+emulFile):
+                    print list_emulDir[index]+'/'+emulFile + "does not exist"
+                list_input.append(item)
+           
+            if args.compare:
+                pool = mp.Pool(processes=50)
+                pool.map(cp.compareDataEmul, [utils.argParser(item_dir, list_emulDir[index], item, outDir, True) for item in list_input])
+                pool.close()
+                pool.join()
+            if args.efficiency:
+                pool = mp.Pool(processes=50)
+                pool.map(ef.calculateEfficiency, [utils.argParser(item_dir, item, outDir, True) for item in list_input])
+                pool.close()
+                pool.join()
+       
+        if args.compare:
+            cmd = ['hadd', str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root'] + glob.glob(outDir+'/comparison/*')
+            subprocess.call(cmd)
+        if args.compare:
+            cmd = ['hadd', str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Efficiency.root'] + glob.glob(outDIr+'/efficiency/*')
+    else:
+        if args.compare:
+            cp.compareDataEmul(utils.argParser('./', './', 'DTDPGNtuple_10_3_3_ZMuSkim_2018D.root', outDir, False))
+        if args.efficiency:
+            ef.calculateEfficiency(utils.argParser('./', 'DTDPGNtuple_10_3_3_ZMuSkim_2018D_Emulator.root',outDir, False))
         
-        quit() 
-     
-    list_input = []
-    for index, item_dir in enumerate(list_dataDir):
-        for item in os.listdir(item_dir):
-            emulFile = item[:item.rfind('_')]+'_Emulator_'+item[:-5].split('_')[-1]+'.root' 
-            if not os.path.exists(list_emulDir[index]+'/'+emulFile):
-                print list_emulDir[index]+'/'+emulFile + "does not exist"
-            list_input.append(item)
-        pool = mp.Pool(processes=50)
-        pool.map(cp.makeHist, [cp.argParser(item_dir, list_emulDir[index], item, outDir) for item in list_input])
-        pool.close()
-        pool.join()
-    
-    cmd = ['hadd', str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root'] + glob.glob(outDir+'/*')
-    subprocess.call(cmd)
-    
-    cp.drawHist(outDir+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root', outDir)
+    if args.compare:
+        cp.drawHist(outDir+'/comparison/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root', outDir+'/pdf')
     
     print "Total running time: %s" % (time.time() - start_time)
