@@ -7,43 +7,30 @@ from ROOT import *
 
 import tdrstyle
 import utils 
-
-def argParser(item_dir, emulDir, item, outDir):
-    args = [item_dir, emulDir, item, outDir]
-    print args
-    return args
-
-#def makeHist(dataDir, emulDir, inFile, outDir):
-def makeHist(args):
-    
+def compareDataEmul(args):
     dataDir = args[0]
     emulDir = args[1]
     inFile = args[2]
     outDir = args[3]
+    multiProcess = args[4]
     # branches of ltTwinMuxOut
     #    nTrigs
     #    wheel, sector, station, BX
     #    quality, rpcBit, is2nd
     #    phi, phiB, posLoc_x, dirLoc_phi
     utils.setChamberName()
-    
-    global name_RPCbit
-    global name_Wheel
-    global name_Sector
-    global name_BX
-
-    global nStation
-    global nWheel
-    global nSector
-    global nBX
-
     print "Start "+str(inFile)
-    f_out = TFile.Open(outDir+'/'+inFile, 'recreate')
+    if not os.path.exists(outDir+'/comparison'):
+        os.makedirs(outDir+'/comparison')
+    f_out = TFile.Open(outDir+'/comparison/'+inFile[:-5]+'_Comparison.root', 'recreate')
     
     DTTREE_data = TChain('dtNtupleProducer/DTTREE')
     DTTREE_data.Add(dataDir+'/'+inFile)
 
-    emulFile = inFile[:inFile.rfind('_')]+'_Emulator_'+inFile[:-5].split('_')[-1]+'.root'
+    if '2018D_' in inFile:
+        emulFile = inFile[:inFile.rfind('_')]+'_Emulator_'+inFile[:-5].split('_')[-1]+'.root'
+    else:
+        emulFile = inFile[:-5]+'_Emulator.root'
     DTTREE_emul = TChain('dtNtupleProducer/DTTREE')
     DTTREE_emul.Add(emulDir+'/'+emulFile)
     
@@ -71,11 +58,11 @@ def makeHist(args):
     h_nSegmentEmul.GetYaxis().SetTitle('Number of Segments')
     h_nSegmentData.Sumw2()
     h_nSegmentEmul.Sumw2()
-    h_nSegmentData_RB = [[0] for i in range(nStation)]
-    h_nSegmentEmul_RB = [[0] for i in range(nStation)]
+    h_nSegmentData_RB = [[0] for i in range(utils.nStation)]
+    h_nSegmentEmul_RB = [[0] for i in range(utils.nStation)]
 
     iBin = 1;
-    for i in range(nStation):
+    for i in range(utils.nStation):
         h_nSegmentData_RB[i] = TH1D('h_nSegmentData_RB'+str(i+1),'Number of Segments in RB'+str(i+1),60,0,60)
         h_nSegmentEmul_RB[i] = TH1D('h_nSegmentEmul_RB'+str(i+1),'Number of Segments in RB'+str(i+1),60,0,60)
         h_nSegmentData_RB[i].GetYaxis().SetTitle('Number of Segments')
@@ -83,10 +70,10 @@ def makeHist(args):
         h_nSegmentData_RB[i].Sumw2()
         h_nSegmentEmul_RB[i].Sumw2()
         iBin2 = 1;
-        for j in range(nWheel):
-            for k in range(nSector):
-                str_name = 'RB'+str(i+1)+'_'+name_Wheel[j]+'_'+name_Sector[k]
-                str_name2 = name_Wheel[j]+'_'+name_Sector[k]
+        for j in range(utils.nWheel):
+            for k in range(utils.nSector):
+                str_name = 'RB'+str(i+1)+'_'+utils.name_Wheel[j]+'_'+utils.name_Sector[k]
+                str_name2 = utils.name_Wheel[j]+'_'+utils.name_Sector[k]
                 h_nSegmentData.GetXaxis().SetBinLabel(iBin,str_name)
                 h_nSegmentEmul.GetXaxis().SetBinLabel(iBin,str_name)
                 h_nSegmentData_RB[i].GetXaxis().SetBinLabel(iBin2,str_name2)
@@ -114,47 +101,47 @@ def makeHist(args):
     h_nSegmentPerChamberEmul.GetYaxis().SetTitle('Entries')
     h_nSegmentPerChamberEmul.Sumw2()
 
-    h2_ltTwinMuxOut_phi = [[0] for i in range(len(name_RPCbit))]
-    h2_ltTwinMuxOut_phiB = [[0] for i in range(len(name_RPCbit))]
-    h2_ltTwinMuxOut_posLoc_x = [[0] for i in range(len(name_RPCbit))]
-    h2_ltTwinMuxOut_dirLoc_phi = [[0] for i in range(len(name_RPCbit))]
+    h2_ltTwinMuxOut_phi = [[0] for i in range(len(utils.name_RPCbit))]
+    h2_ltTwinMuxOut_phiB = [[0] for i in range(len(utils.name_RPCbit))]
+    h2_ltTwinMuxOut_posLoc_x = [[0] for i in range(len(utils.name_RPCbit))]
+    h2_ltTwinMuxOut_dirLoc_phi = [[0] for i in range(len(utils.name_RPCbit))]
 
-    for i in range(len(name_RPCbit)):
+    for i in range(len(utils.name_RPCbit)):
         h2_ltTwinMuxOut_phi[i] = TH2D(
-                'h2_ltTwinMuxOut_phi_'+name_RPCbit[i],
-                'h2_ltTwinMuxOut_phi_'+name_RPCbit[i],
-                100, -2000.0, 2000.0, 100, -2000.0, 2000.0)
+                'h2_ltTwinMuxOut_phi_'+utils.name_RPCbit[i],
+                'h2_ltTwinMuxOut_phi_'+utils.name_RPCbit[i],
+                50, -2000.0, 2000.0, 50, -2000.0, 2000.0)
         h2_ltTwinMuxOut_phi[i].GetXaxis().SetTitle('Data.ltTwinMuxOut_phi')
         h2_ltTwinMuxOut_phi[i].GetYaxis().SetTitle('Emul.ltTwinMuxOut_phi')
         h2_ltTwinMuxOut_phi[i].Sumw2()
 
         h2_ltTwinMuxOut_phiB[i] = TH2D(
-                'h2_ltTwinMuxOut_phiB_'+name_RPCbit[i],
-                'h2_ltTwinMuxOut_phiB_'+name_RPCbit[i],
-                100, -450.0, 450.0, 100, -450.0, 450.0)
+                'h2_ltTwinMuxOut_phiB_'+utils.name_RPCbit[i],
+                'h2_ltTwinMuxOut_phiB_'+utils.name_RPCbit[i],
+                50, -450.0, 450.0, 50, -450.0, 450.0)
         h2_ltTwinMuxOut_phiB[i].GetXaxis().SetTitle('Data.ltTwinMuxOut_phiB')
         h2_ltTwinMuxOut_phiB[i].GetYaxis().SetTitle('Emul.ltTwinMuxOut_phiB')
         h2_ltTwinMuxOut_phiB[i].Sumw2()
 
         h2_ltTwinMuxOut_posLoc_x[i] = TH2D(
-                'h2_ltTwinMuxOut_posLoc_x_'+name_RPCbit[i],
-                'h2_ltTwinMuxOut_posLoc_x_'+name_RPCbit[i],
-                100, -350.0, 350.0, 100, -350.0, 350.0)
+                'h2_ltTwinMuxOut_posLoc_x_'+utils.name_RPCbit[i],
+                'h2_ltTwinMuxOut_posLoc_x_'+utils.name_RPCbit[i],
+                50, -350.0, 350.0, 50, -350.0, 350.0)
         h2_ltTwinMuxOut_posLoc_x[i].GetXaxis().SetTitle('Data.ltTwinMuxOut_posLoc_x')
         h2_ltTwinMuxOut_posLoc_x[i].GetYaxis().SetTitle('Emul.ltTwinMuxOut_posLoc_x')
         h2_ltTwinMuxOut_posLoc_x[i].Sumw2()
 
         h2_ltTwinMuxOut_dirLoc_phi[i] = TH2D(
-                'h2_ltTwinMuxOut_dirLoc_phi_'+name_RPCbit[i],
-                'h2_ltTwinMuxOut_dirLoc_phi_'+name_RPCbit[i],
-                100, -90.0, 90.0, 100, -90.0, 90.0)
+                'h2_ltTwinMuxOut_dirLoc_phi_'+utils.name_RPCbit[i],
+                'h2_ltTwinMuxOut_dirLoc_phi_'+utils.name_RPCbit[i],
+                50, -90.0, 90.0, 50, -90.0, 90.0)
         h2_ltTwinMuxOut_dirLoc_phi[i].GetXaxis().SetTitle('Data.ltTwinMuxOut_dirLoc_phi')
         h2_ltTwinMuxOut_dirLoc_phi[i].GetYaxis().SetTitle('Emul.ltTwinMuxOut_dirLoc_phi')
         h2_ltTwinMuxOut_dirLoc_phi[i].Sumw2()
     
     for ievt in xrange(DTTREE_data.GetEntries()):
-        #printProgress(i, DTTREE_data.GetEntries(), 'Progress: ', 'Complete', 1, 25)
-        
+        if not multiProcess:
+            utils.printProgress(ievt, DTTREE_data.GetEntries(), 'Progress: ', 'Complete', 1, 25)
         DTTREE_data.GetEntry(ievt)
         DTTREE_emul.GetEntry(ievt)
 
@@ -174,8 +161,8 @@ def makeHist(args):
             print "Skip event number"+str(DTTREE_data.event_eventNumber)
             continue
         
-        nSegmentData  = [[[[0 for i in range(nBX)] for j in range(nSector)] for k in range(nWheel)] for l in range(nStation)]
-        nSegmentEmul  = [[[[0 for i in range(nBX)] for j in range(nSector)] for k in range(nWheel)] for l in range(nStation)]
+        nSegmentData  = [[[[0 for i in range(utils.nBX)] for j in range(utils.nSector)] for k in range(utils.nWheel)] for l in range(utils.nStation)]
+        nSegmentEmul  = [[[[0 for i in range(utils.nBX)] for j in range(utils.nSector)] for k in range(utils.nWheel)] for l in range(utils.nStation)]
        
         # Debug
         #if len(DTTREE_data.ltTwinMuxOut_rpcBit) > 0:
@@ -217,10 +204,11 @@ def makeHist(args):
                 same_wheel = False
                 same_sector = False
                 same_BX = False
+                same_quality = False
 
                 if DTTREE_data.ltTwinMuxOut_rpcBit[i] == DTTREE_emul.ltTwinMuxOut_rpcBit[j]:
                     same_rpcBit = True
-                if DTTREE_data.ltTwinMuxOut_is2nd[i] == DTTREE_emul.ltTwinMuxOut_is2nd[j]:
+                if DTTREE_data.ltTwinMuxOut_is2nd[i] == 0 and DTTREE_emul.ltTwinMuxOut_is2nd[j] == 0:
                     same_is2nd = True
                 if DTTREE_data.ltTwinMuxOut_station[i] == DTTREE_emul.ltTwinMuxOut_station[j]:
                     same_station = True
@@ -230,6 +218,8 @@ def makeHist(args):
                     same_sector = True
                 if DTTREE_data.ltTwinMuxOut_BX[i] == DTTREE_emul.ltTwinMuxOut_BX[j]:
                     same_BX = True
+                if DTTREE_data.ltTwinMuxOut_quality[i] == DTTREE_emul.ltTwinMuxOut_quality[j]:
+                    same_quality = True
 
                 if same_rpcBit and same_is2nd and same_station and same_wheel and same_sector and same_BX:
                     h2_ltTwinMuxOut_phi[0].Fill(DTTREE_data.ltTwinMuxOut_phi[i], DTTREE_emul.ltTwinMuxOut_phi[j])
@@ -252,7 +242,7 @@ def makeHist(args):
                         h2_ltTwinMuxOut_posLoc_x[3].Fill(DTTREE_data.ltTwinMuxOut_posLoc_x[i], DTTREE_emul.ltTwinMuxOut_posLoc_x[j])
                         h2_ltTwinMuxOut_dirLoc_phi[3].Fill(DTTREE_data.ltTwinMuxOut_dirLoc_phi[i], DTTREE_emul.ltTwinMuxOut_dirLoc_phi[j])
 
-        #nSegment[nStation][nWheel][nSector][nBX]
+        #nSegment[utils.nStation][utils.nWheel][utils.nSector][utils.nBX]
         for i in range(DTTREE_data.ltTwinMuxOut_nTrigs):
             iStation_idx = DTTREE_data.ltTwinMuxOut_station[i] - 1
             iWheel_idx = DTTREE_data.ltTwinMuxOut_wheel[i] + 2
@@ -278,13 +268,13 @@ def makeHist(args):
         #        print("Value: "+str(nSegmentData[tmp[0][i]][tmp[1][i]][tmp[2][i]][tmp[3][i]]))
 
         binNum = 0
-        for i in range(nStation):
+        for i in range(utils.nStation):
             binNum2 = 0
-            for j in range(nWheel):
-                for k in range(nSector):
+            for j in range(utils.nWheel):
+                for k in range(utils.nSector):
                     tmp1 = 0.0
                     tmp2 = 0.0
-                    for l in range(nBX):
+                    for l in range(utils.nBX):
                         tmp1 += nSegmentData[i][j][k][l]
                         tmp2 += nSegmentEmul[i][j][k][l]
                         h_nSegmentPerChamberData.Fill(nSegmentData[i][j][k][l])
@@ -310,12 +300,6 @@ def makeHist(args):
 
 def drawHist(inFile, outDir):
     utils.setChamberName()
-
-    global name_RPCbit
-    global nStation
-    global nWheel
-    global nSector
-    global nBX
     
     f_in = TFile.Open(inFile, "update")
 
@@ -330,7 +314,7 @@ def drawHist(inFile, outDir):
     h_nRPCbitData = f_in.Get('h_nRPCbitData')
     h_nRPCbitEmul = f_in.Get('h_nRPCbitEmul')
     
-    leg.SetHeader('Run2018D SingleMu')
+    leg.SetHeader('Run2018D SingleMu 321475')
     leg.AddEntry(h_nRPCbitData, 'Unpacked', 'l')
     leg.AddEntry(h_nRPCbitEmul, 'Emulator', 'l')
 
@@ -345,14 +329,14 @@ def drawHist(inFile, outDir):
     leg.Draw('same')
     wp.Draw('same')
     
-    c.Print('./pdf/h_nRPCbitComp.pdf','pdf')
+    c.Print(outDir+'/h_nRPCbitComp.pdf','pdf')
     leg.Clear()
     c.Clear()
 
     h_nSegmentPerChamberData = f_in.Get('h_nSegmentPerChamberData')
     h_nSegmentPerChamberEmul = f_in.Get('h_nSegmentPerChamberEmul')
 
-    leg.SetHeader('Run2018D SingleMu')
+    leg.SetHeader('Run2018D SingleMu 321475')
     leg.AddEntry(h_nSegmentPerChamberData, 'Unpacked', 'l')
     leg.AddEntry(h_nSegmentPerChamberEmul, 'Emulator', 'l')
 
@@ -367,14 +351,14 @@ def drawHist(inFile, outDir):
     leg.Draw('same')
     wp.Draw('same')
 
-    c.Print('./pdf/h_nSegmentPerChamberComp.pdf','pdf')
+    c.Print(outDir+'/h_nSegmentPerChamberComp.pdf','pdf')
     leg.Clear()
     c.Clear()
 
     h_nSegmentPerChamberData2 = f_in.Get('h_nSegmentPerChamberData_exceptSeg0')
     h_nSegmentPerChamberEmul2 = f_in.Get('h_nSegmentPerChamberEmul_exceptSeg0')
 
-    leg.SetHeader('Run2018D SingleMu')
+    leg.SetHeader('Run2018D SingleMu 321475')
     leg.AddEntry(h_nSegmentPerChamberData2, 'Unpacked', 'l')
     leg.AddEntry(h_nSegmentPerChamberEmul2, 'Emulator', 'l')
 
@@ -389,12 +373,11 @@ def drawHist(inFile, outDir):
     leg.Draw('same')
     wp.Draw('same')
 
-    c.Print('./pdf/h_nSegmentPerChamberComp_except0.pdf','pdf')
+    c.Print(outDir+'/h_nSegmentPerChamberComp_except0.pdf','pdf')
     leg.Clear()
     c.Clear()
 
-    nStation = 4
-    for i in range(nStation):
+    for i in range(utils.nStation):
         h_nSegmentData_RB = f_in.Get('h_nSegmentData_RB'+str(i+1))
         h_nSegmentEmul_RB = f_in.Get('h_nSegmentEmul_RB'+str(i+1))
 
@@ -409,7 +392,7 @@ def drawHist(inFile, outDir):
         label.SetBorderSize(0)
         label.SetTextSize(0.04)
 
-        leg.SetHeader('Run2018D SingleMu')
+        leg.SetHeader('Run2018D SingleMu 321475')
         leg.AddEntry(h_nSegmentData_RB, 'Unpacked', 'l')
         leg.AddEntry(h_nSegmentEmul_RB, 'Emulator', 'l')
 
@@ -422,12 +405,12 @@ def drawHist(inFile, outDir):
         leg.Draw('same')
         wp.Draw('same')
         label.Draw('same')
-        c.Print('./pdf/h_nSegmentComp_RB'+str(i+1)+'.pdf','pdf')
+        c.Print(outDir+'/h_nSegmentComp_RB'+str(i+1)+'.pdf','pdf')
         leg.Clear()
         c.Clear()
 
-    for i in range(len(name_RPCbit)):
-        h2_ltTwinMuxOut_phi = f_in.Get('h2_ltTwinMuxOut_phi_'+str(name_RPCbit[i]))
+    for i in range(len(utils.name_RPCbit)):
+        h2_ltTwinMuxOut_phi = f_in.Get('h2_ltTwinMuxOut_phi_'+str(utils.name_RPCbit[i]))
         h_ltTwinMuxOut_phi_offdig = h2_ltTwinMuxOut_phi.ProjectionX()
         for iBin in range(1,h_ltTwinMuxOut_phi_offdig.GetNbinsX()+1):
             tmp = h2_ltTwinMuxOut_phi.GetBinContent(iBin, iBin)
@@ -437,7 +420,7 @@ def drawHist(inFile, outDir):
             else:
                 value = 0
             h_ltTwinMuxOut_phi_offdig.SetBinContent(iBin, value)
-        h_ltTwinMuxOut_phi_offdig.SetName('h_ltTwinMuxOut_phi_offDig_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_phi_offdig.SetName('h_ltTwinMuxOut_phi_offDig_'+str(utils.name_RPCbit[i]))
         h_ltTwinMuxOut_phi_offdig.Write()
 
         h_ltTwinMuxOut_phi_offdig.GetYaxis().SetTitleFont(42)
@@ -448,10 +431,10 @@ def drawHist(inFile, outDir):
         h_ltTwinMuxOut_phi_offdig.GetXaxis().SetLabelSize(0.025)
         h_ltTwinMuxOut_phi_offdig.Draw('hist')
         wp.Draw('same')
-        c.Print('./pdf/h_ltTwinMuxOut_phi_offDig_'+name_RPCbit[i]+'.pdf', 'pdf')
+        c.Print(outDir+'/h_ltTwinMuxOut_phi_offDig_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
 
-        h2_ltTwinMuxOut_phiB = f_in.Get('h2_ltTwinMuxOut_phiB_'+str(name_RPCbit[i]))
+        h2_ltTwinMuxOut_phiB = f_in.Get('h2_ltTwinMuxOut_phiB_'+str(utils.name_RPCbit[i]))
         h_ltTwinMuxOut_phiB_offdig = h2_ltTwinMuxOut_phiB.ProjectionX()
         for iBin in range(1,h_ltTwinMuxOut_phiB_offdig.GetNbinsX()+1):
             tmp = h2_ltTwinMuxOut_phiB.GetBinContent(iBin, iBin)
@@ -461,7 +444,7 @@ def drawHist(inFile, outDir):
             else:
                 value = 0
             h_ltTwinMuxOut_phiB_offdig.SetBinContent(iBin, value)
-        h_ltTwinMuxOut_phiB_offdig.SetName('h_ltTwinMuxOut_phiB_offDig_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_phiB_offdig.SetName('h_ltTwinMuxOut_phiB_offDig_'+str(utils.name_RPCbit[i]))
         h_ltTwinMuxOut_phiB_offdig.Write()
 
         h_ltTwinMuxOut_phiB_offdig.GetYaxis().SetTitleFont(42)
@@ -472,10 +455,10 @@ def drawHist(inFile, outDir):
         h_ltTwinMuxOut_phiB_offdig.GetXaxis().SetLabelSize(0.025)
         h_ltTwinMuxOut_phiB_offdig.Draw('hist')
         wp.Draw('same')
-        c.Print('./pdf/h_ltTwinMuxOut_phiB_offDig_'+name_RPCbit[i]+'.pdf', 'pdf')
+        c.Print(outDir+'/h_ltTwinMuxOut_phiB_offDig_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
  
-        h2_ltTwinMuxOut_posLoc_x = f_in.Get('h2_ltTwinMuxOut_posLoc_x_'+str(name_RPCbit[i]))
+        h2_ltTwinMuxOut_posLoc_x = f_in.Get('h2_ltTwinMuxOut_posLoc_x_'+str(utils.name_RPCbit[i]))
         h_ltTwinMuxOut_posLoc_x_offdig = h2_ltTwinMuxOut_posLoc_x.ProjectionX()
         for iBin in range(1,h_ltTwinMuxOut_posLoc_x_offdig.GetNbinsX()+1):
             tmp = h2_ltTwinMuxOut_posLoc_x.GetBinContent(iBin, iBin)
@@ -485,10 +468,10 @@ def drawHist(inFile, outDir):
             else:
                 value = 0
             h_ltTwinMuxOut_posLoc_x_offdig.SetBinContent(iBin, value)
-        h_ltTwinMuxOut_posLoc_x_offdig.SetName('h_ltTwinMuxOut_posLoc_x_offDig_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_posLoc_x_offdig.SetName('h_ltTwinMuxOut_posLoc_x_offDig_'+str(utils.name_RPCbit[i]))
         h_ltTwinMuxOut_posLoc_x_offdig.Write()
     
-        h_ltTwinMuxOut_posLoc_x_offdig = f_in.Get('h_ltTwinMuxOut_posLoc_x_offDig_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_posLoc_x_offdig = f_in.Get('h_ltTwinMuxOut_posLoc_x_offDig_'+str(utils.name_RPCbit[i]))
         h_ltTwinMuxOut_posLoc_x_offdig.GetYaxis().SetTitleFont(42)
         h_ltTwinMuxOut_posLoc_x_offdig.GetYaxis().SetTitle('Off diagonal(%)')
         h_ltTwinMuxOut_posLoc_x_offdig.GetYaxis().SetTitleSize(0.038)
@@ -497,10 +480,10 @@ def drawHist(inFile, outDir):
         h_ltTwinMuxOut_posLoc_x_offdig.GetXaxis().SetLabelSize(0.025)
         h_ltTwinMuxOut_posLoc_x_offdig.Draw('hist')
         wp.Draw('same')
-        c.Print('./pdf/h_ltTwinMuxOut_posLoc_x_offDig_'+name_RPCbit[i]+'.pdf', 'pdf')
+        c.Print(outDir+'/h_ltTwinMuxOut_posLoc_x_offDig_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
 
-        h2_ltTwinMuxOut_dirLoc_phi = f_in.Get('h2_ltTwinMuxOut_dirLoc_phi_'+str(name_RPCbit[i]))
+        h2_ltTwinMuxOut_dirLoc_phi = f_in.Get('h2_ltTwinMuxOut_dirLoc_phi_'+str(utils.name_RPCbit[i]))
         h_ltTwinMuxOut_dirLoc_phi_offdig = h2_ltTwinMuxOut_dirLoc_phi.ProjectionX()
         for iBin in range(1,h_ltTwinMuxOut_dirLoc_phi_offdig.GetNbinsX()+1):
             tmp = h2_ltTwinMuxOut_dirLoc_phi.GetBinContent(iBin, iBin)
@@ -510,7 +493,7 @@ def drawHist(inFile, outDir):
             else:
                 value = 0
             h_ltTwinMuxOut_dirLoc_phi_offdig.SetBinContent(iBin, value)
-        h_ltTwinMuxOut_dirLoc_phi_offdig.SetName('h_ltTwinMuxOut_dirLoc_phi_offDig_'+str(name_RPCbit[i]))
+        h_ltTwinMuxOut_dirLoc_phi_offdig.SetName('h_ltTwinMuxOut_dirLoc_phi_offDig_'+str(utils.name_RPCbit[i]))
         h_ltTwinMuxOut_dirLoc_phi_offdig.Write()
  
         h_ltTwinMuxOut_dirLoc_phi_offdig.GetYaxis().SetTitleFont(42)
@@ -521,29 +504,29 @@ def drawHist(inFile, outDir):
         h_ltTwinMuxOut_dirLoc_phi_offdig.GetXaxis().SetLabelSize(0.025)
         h_ltTwinMuxOut_dirLoc_phi_offdig.Draw('hist')
         wp.Draw('same')
-        c.Print('./pdf/h_ltTwinMuxOut_dirLoc_phi_offDig_'+name_RPCbit[i]+'.pdf', 'pdf')
+        c.Print(outDir+'/h_ltTwinMuxOut_dirLoc_phi_offDig_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
   
-    for i in range(len(name_RPCbit)):
+    for i in range(len(utils.name_RPCbit)):
         gPad.SetRightMargin(0.12)
-        h2_ltTwinMuxOut_phi = f_in.Get('h2_ltTwinMuxOut_phi_'+name_RPCbit[i])
+        h2_ltTwinMuxOut_phi = f_in.Get('h2_ltTwinMuxOut_phi_'+utils.name_RPCbit[i])
         h2_ltTwinMuxOut_phi.Draw('colz')
-        c.Print('./pdf/h2_ltTwinMuxOut_phi_'+name_RPCbit[i]+'.pdf', 'pdf')
+        c.Print(outDir+'/h2_ltTwinMuxOut_phi_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
 
-        h2_ltTwinMuxOut_phiB = f_in.Get('h2_ltTwinMuxOut_phiB_'+name_RPCbit[i])
+        h2_ltTwinMuxOut_phiB = f_in.Get('h2_ltTwinMuxOut_phiB_'+utils.name_RPCbit[i])
         h2_ltTwinMuxOut_phiB.Draw('colz')
-        c.Print('./pdf/h2_ltTwinMuxOut_phiB_'+name_RPCbit[i]+'.pdf', 'pdf')
+        c.Print(outDir+'/h2_ltTwinMuxOut_phiB_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
 
-        h2_ltTwinMuxOut_posLoc_x = f_in.Get('h2_ltTwinMuxOut_posLoc_x_'+name_RPCbit[i])
+        h2_ltTwinMuxOut_posLoc_x = f_in.Get('h2_ltTwinMuxOut_posLoc_x_'+utils.name_RPCbit[i])
         h2_ltTwinMuxOut_posLoc_x.Draw('colz')
-        c.Print('./pdf/h2_ltTwinMuxOut_posLoc_x_'+name_RPCbit[i]+'.pdf', 'pdf')
+        c.Print(outDir+'/h2_ltTwinMuxOut_posLoc_x_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
 
-        h2_ltTwinMuxOut_dirLoc_phi = f_in.Get('h2_ltTwinMuxOut_dirLoc_phi_'+name_RPCbit[i])
+        h2_ltTwinMuxOut_dirLoc_phi = f_in.Get('h2_ltTwinMuxOut_dirLoc_phi_'+utils.name_RPCbit[i])
         h2_ltTwinMuxOut_dirLoc_phi.Draw('colz')
-        c.Print('./pdf/h2_ltTwinMuxOut_dirLoc_phi_'+name_RPCbit[i]+'.pdf', 'pdf')
+        c.Print(outDir+'/h2_ltTwinMuxOut_dirLoc_phi_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
         c.Clear()
 
     f_in.Close()
