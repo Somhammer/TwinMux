@@ -48,8 +48,6 @@ def calculateEfficiency(args):#(emulDir, inFile, outDir):
             if DTTREE.seg_phi_t0[iseg] > -6.0 or DTTREE.seg_phi_t0[iseg] < 6.0:
                 isMatchWithRPCbit01 = False
                 for itrig in range(DTTREE.ltTwinMuxOut_nTrigs):
-                    # Match between DTSegment and TwinMuxOut
-                    isSameDetector = False
                     isSameWheel = False
                     isSameStation = False
                     isSameSector = False
@@ -76,10 +74,25 @@ def calculateEfficiency(args):#(emulDir, inFile, outDir):
                                 isMatchWithRPCbit01 = True
                 
                 if not isMatchWithRPCbit01:
-                    denoRPConly += 1
-                    for itrig in range(DTTREE.ltTwinMuxOut_nTrigs):
-                        if abs(DTTREE.ltTwinMuxOut_phi[itrig]) < coneSize and DTTREE.ltTwinMuxOut_rpcBit[itrig] == 2:
-                            numeRPConly += 1
+                    if DTTREE.seg_station[iseg] <= 2:
+                        denoRPConly += 1
+                        for itrig in range(DTTREE.ltTwinMuxOut_nTrigs):
+                            isSameDetector = False
+                            isSameWheel = False
+                            isSameStation = False
+                            isSameSector = False
+                            if DTTREE.seg_wheel[iseg] and DTTREE.ltTwinMuxOut_wheel[itrig]:
+                                isSameWheel = True
+                            if DTTREE.seg_sector[iseg] and DTTREE.ltTwinMuxOut_sector[itrig]:
+                                isSameSector = True
+                            if DTTREE.seg_station[iseg] and DTTREE.ltTwinMuxOut_station[itrig]:
+                                isSameStation = True
+
+                            if isSameWheel and isSameSector and isSameStation:
+                                isSameDetector = True
+
+                            if abs(DTTREE.ltTwinMuxOut_phi[itrig]) < coneSize and DTTREE.ltTwinMuxOut_rpcBit[itrig] == 2:
+                                numeRPConly += 1
 
     print "\nDeno(inclusive): "+str(denoInclusive)
     print "Nume(inclusive): "+str(numeInclusive)
