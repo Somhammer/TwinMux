@@ -45,9 +45,10 @@ def calculateEfficiency(args):#(emulDir, inFile, outDir):
             utils.printProgress(ievent, DTTREE.GetEntries(), 'Progress: ', 'Complete', 1, 25)
         DTTREE.GetEntry(ievent)
         for iseg in range(DTTREE.seg_nSegments):
-            if DTTREE.seg_phi_t0[iseg] > -6.0 or DTTREE.seg_phi_t0[iseg] < 6.0:
+            if DTTREE.seg_phi_t0[iseg] > -6.0 and DTTREE.seg_phi_t0[iseg] < 6.0:
                 isMatchWithRPCbit01 = False
                 for itrig in range(DTTREE.ltTwinMuxOut_nTrigs):
+                    isSameDetector = False
                     isSameWheel = False
                     isSameStation = False
                     isSameSector = False
@@ -65,13 +66,13 @@ def calculateEfficiency(args):#(emulDir, inFile, outDir):
                     if isSameWheel and isSameStation and isSameSector and isBX0:
                         deltaPhi = DTTREE.seg_posGlb_phi[iseg] - DTTREE.ltTwinMuxOut_phi[itrig]
                         h_SegVsTwinMux_dPhi.Fill(deltaPhi)
+                        isSameDetector = True
                     
-                    if DTTREE.seg_station[iseg] <= 2:
+                    if DTTREE.seg_station[iseg] <= 2 and isSameDetector:
                         denoInclusive += 1
                         if DTTREE.ltTwinMuxOut_rpcBit[itrig] < 2:
-                            if abs(DTTREE.ltTwinMuxOut_phi[itrig]) < coneSize:
-                                numeInclusive += 1
-                                isMatchWithRPCbit01 = True
+                            numeInclusive += 1
+                            isMatchWithRPCbit01 = True
                 
                 if not isMatchWithRPCbit01:
                     if DTTREE.seg_station[iseg] <= 2:
@@ -91,7 +92,7 @@ def calculateEfficiency(args):#(emulDir, inFile, outDir):
                             if isSameWheel and isSameSector and isSameStation:
                                 isSameDetector = True
 
-                            if abs(DTTREE.ltTwinMuxOut_phi[itrig]) < coneSize and DTTREE.ltTwinMuxOut_rpcBit[itrig] == 2:
+                            if DTTREE.ltTwinMuxOut_rpcBit[itrig] == 2 and isSameDetector:
                                 numeRPConly += 1
 
     print "\nDeno(inclusive): "+str(denoInclusive)
