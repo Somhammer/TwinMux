@@ -221,7 +221,7 @@ def compareDataEmul(args):
                 if DTTREE_data.ltTwinMuxOut_quality[i] == DTTREE_emul.ltTwinMuxOut_quality[j]:
                     same_quality = True
 
-                if same_rpcBit and same_is2nd and same_station and same_wheel and same_sector and same_BX:
+                if same_rpcBit and same_is2nd and same_station and same_wheel and same_sector and same_BX and same_quality:
                     h2_ltTwinMuxOut_phi[0].Fill(DTTREE_data.ltTwinMuxOut_phi[i], DTTREE_emul.ltTwinMuxOut_phi[j])
                     h2_ltTwinMuxOut_phiB[0].Fill(DTTREE_data.ltTwinMuxOut_phiB[i], DTTREE_emul.ltTwinMuxOut_phiB[j])
                     h2_ltTwinMuxOut_posLoc_x[0].Fill(DTTREE_data.ltTwinMuxOut_posLoc_x[i], DTTREE_emul.ltTwinMuxOut_posLoc_x[j])
