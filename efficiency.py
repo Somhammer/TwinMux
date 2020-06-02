@@ -13,7 +13,6 @@ def calculateEfficiency(args):#(emulDir, inFile, outDir):
     inFile = args[1]
     outDir = args[2]
     multiProcess = args[3]
-    print "Start "+str(inFile)
     if not os.path.exists(outDir+'/efficiency'):
         os.makedirs(outDir+'/efficiency')
     f_out = TFile.Open(outDir+'/efficiency/'+inFile, 'recreate')
@@ -27,13 +26,12 @@ def calculateEfficiency(args):#(emulDir, inFile, outDir):
     h_SegVsTwinMux_dPhi.GetYaxis().SetTitle('Entries')
     h_SegVsTwinMux_dPhi.Sumw2()
 
-    h_Efficiency = TH1D('h_Efficiency', 'The efficiency of trigger primitives', 2, 0, 2)
+    h_Efficiency = TH1D('h_Efficiency', 'The efficiency of trigger primitives', 4, 0, 4)
     h_Efficiency.GetXaxis().SetTitle("")
-    h_Efficiency.GetXaxis().SetBinLabel(1,'inclusive')
-    h_Efficiency.GetXaxis().SetBinLabel(2,'RPC only')
-    h_Efficiency.GetXaxis().SetTitle("Efficiency")
-    h_Efficiency.SetMaximum(1.2)
-    h_Efficiency.SetMinimum(0.0)
+    h_Efficiency.GetXaxis().SetBinLabel(1,'Deno(inclusive)')
+    h_Efficiency.GetXaxis().SetBinLabel(2,'Nume(inclusive)')
+    h_Efficiency.GetXaxis().SetBinLabel(3,'Deno(RPC only)')
+    h_Efficiency.GetXaxis().SetBinLabel(4,'Nume(RPC only)')
 
     coneSize = 1600
     denoInclusive = 0 
@@ -62,49 +60,46 @@ def calculateEfficiency(args):#(emulDir, inFile, outDir):
                         isSameStation = True
                     if DTTREE.ltTwinMuxOut_BX[itrig] == 0:
                         isBX0 = True
-
-                    if isSameWheel and isSameStation and isSameSector and isBX0:
-                        deltaPhi = DTTREE.seg_posGlb_phi[iseg] - DTTREE.ltTwinMuxOut_phi[itrig]
-                        h_SegVsTwinMux_dPhi.Fill(deltaPhi)
+                    if isSameWheel and isSameStation and isSameSector:
                         isSameDetector = True
                     
-                    if DTTREE.seg_station[iseg] <= 2 and isSameDetector:
+                    if isSameDetector and isBX0:
+                        deltaPhi = DTTREE.seg_posGlb_phi[iseg] - DTTREE.ltTwinMuxOut_phi[itrig]
+                        h_SegVsTwinMux_dPhi.Fill(deltaPhi)
+                    
+                    if DTTREE.seg_station[iseg] <= 2 and isSameDetector and isBX0:
                         denoInclusive += 1
+                        h_Efficiency.Fill(0,1)
                         if DTTREE.ltTwinMuxOut_rpcBit[itrig] < 2:
                             numeInclusive += 1
+                            h_Efficiency.Fill(1,1)
                             isMatchWithRPCbit01 = True
                 
-                if not isMatchWithRPCbit01:
-                    if DTTREE.seg_station[iseg] <= 2:
-                        denoRPConly += 1
-                        for itrig in range(DTTREE.ltTwinMuxOut_nTrigs):
-                            isSameDetector = False
-                            isSameWheel = False
-                            isSameStation = False
-                            isSameSector = False
-                            if DTTREE.seg_wheel[iseg] and DTTREE.ltTwinMuxOut_wheel[itrig]:
-                                isSameWheel = True
-                            if DTTREE.seg_sector[iseg] and DTTREE.ltTwinMuxOut_sector[itrig]:
-                                isSameSector = True
-                            if DTTREE.seg_station[iseg] and DTTREE.ltTwinMuxOut_station[itrig]:
-                                isSameStation = True
+                if not isMatchWithRPCbit01 and DTTREE.seg_station[iseg] <= 2:
+                    denoRPConly += 1
+                    h_Efficiency.Fill(2,1)
+                    for itrig in range(DTTREE.ltTwinMuxOut_nTrigs):
+                        isSameWheel = False
+                        isSameStation = False
+                        isSameSector = False
+                        if DTTREE.seg_wheel[iseg] and DTTREE.ltTwinMuxOut_wheel[itrig]:
+                            isSameWheel = True
+                        if DTTREE.seg_sector[iseg] and DTTREE.ltTwinMuxOut_sector[itrig]:
+                            isSameSector = True
+                        if DTTREE.seg_station[iseg] and DTTREE.ltTwinMuxOut_station[itrig]:
+                            isSameStation = True
 
-                            if isSameWheel and isSameSector and isSameStation:
-                                isSameDetector = True
-
-                            if DTTREE.ltTwinMuxOut_rpcBit[itrig] == 2 and isSameDetector:
-                                numeRPConly += 1
-
-    print "\nDeno(inclusive): "+str(denoInclusive)
-    print "Nume(inclusive): "+str(numeInclusive)
-    print "Deno(RPConly): "+str(denoRPConly)
-    print "Nume(RPConly): "+str(numeRPConly)
-    effInclusive = float(numeInclusive)/float(denoInclusive)
-    effRPConly = float(numeRPConly)/float(denoRPConly)
-    h_Efficiency.SetBinContent(1, effInclusive)
-    h_Efficiency.SetBinContent(2, effRPConly)
-    print "Efficiency(inclusive): "+str(effInclusive)
-    print "Efficiency(RPC only): "+str(effRPConly)
+                        if isSameWheel and isSameSector and isSameStation and DTTREE.ltTwinMuxOut_rpcBit[itrig] == 2:
+                            numeRPConly += 1
+                            h_Efficiency.Fill(3,1)
+                
+    if not multiProcess:
+        effInclusive = float(numeInclusive)/float(denoInclusive)
+        effRPConly = float(numeRPConly)/float(denoRPConly)
+        print '\n==== Inclusive ===='
+        print 'Nume: '+str(numeInclusive)+', Deno: '+str(denoInclusive)+', Efficiency: '+str(effInclusive)
+        print '==== RPC only ===='
+        print 'Nume: '+str(numeRPConly)+', Deno: '+str(denoRPConly)+', Efficiency: '+str(effRPConly)
 
     f_out.Write()
     f_out.Close()

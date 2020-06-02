@@ -19,7 +19,6 @@ def compareDataEmul(args):
     #    quality, rpcBit, is2nd
     #    phi, phiB, posLoc_x, dirLoc_phi
     utils.setChamberName()
-    print "Start "+str(inFile)
     if not os.path.exists(outDir+'/comparison'):
         os.makedirs(outDir+'/comparison')
     f_out = TFile.Open(outDir+'/comparison/'+inFile[:-5]+'_Comparison.root', 'recreate')
@@ -110,7 +109,7 @@ def compareDataEmul(args):
         h2_ltTwinMuxOut_phi[i] = TH2D(
                 'h2_ltTwinMuxOut_phi_'+utils.name_RPCbit[i],
                 'h2_ltTwinMuxOut_phi_'+utils.name_RPCbit[i],
-                50, -2000.0, 2000.0, 50, -2000.0, 2000.0)
+                20, -2000.0, 2000.0, 20, -2000.0, 2000.0)
         h2_ltTwinMuxOut_phi[i].GetXaxis().SetTitle('Data.ltTwinMuxOut_phi')
         h2_ltTwinMuxOut_phi[i].GetYaxis().SetTitle('Emul.ltTwinMuxOut_phi')
         h2_ltTwinMuxOut_phi[i].Sumw2()
@@ -118,7 +117,7 @@ def compareDataEmul(args):
         h2_ltTwinMuxOut_phiB[i] = TH2D(
                 'h2_ltTwinMuxOut_phiB_'+utils.name_RPCbit[i],
                 'h2_ltTwinMuxOut_phiB_'+utils.name_RPCbit[i],
-                50, -450.0, 450.0, 50, -450.0, 450.0)
+                20, -450.0, 450.0, 20, -450.0, 450.0)
         h2_ltTwinMuxOut_phiB[i].GetXaxis().SetTitle('Data.ltTwinMuxOut_phiB')
         h2_ltTwinMuxOut_phiB[i].GetYaxis().SetTitle('Emul.ltTwinMuxOut_phiB')
         h2_ltTwinMuxOut_phiB[i].Sumw2()
@@ -126,7 +125,7 @@ def compareDataEmul(args):
         h2_ltTwinMuxOut_posLoc_x[i] = TH2D(
                 'h2_ltTwinMuxOut_posLoc_x_'+utils.name_RPCbit[i],
                 'h2_ltTwinMuxOut_posLoc_x_'+utils.name_RPCbit[i],
-                50, -350.0, 350.0, 50, -350.0, 350.0)
+                20, -350.0, 350.0, 20, -350.0, 350.0)
         h2_ltTwinMuxOut_posLoc_x[i].GetXaxis().SetTitle('Data.ltTwinMuxOut_posLoc_x')
         h2_ltTwinMuxOut_posLoc_x[i].GetYaxis().SetTitle('Emul.ltTwinMuxOut_posLoc_x')
         h2_ltTwinMuxOut_posLoc_x[i].Sumw2()
@@ -134,7 +133,7 @@ def compareDataEmul(args):
         h2_ltTwinMuxOut_dirLoc_phi[i] = TH2D(
                 'h2_ltTwinMuxOut_dirLoc_phi_'+utils.name_RPCbit[i],
                 'h2_ltTwinMuxOut_dirLoc_phi_'+utils.name_RPCbit[i],
-                50, -90.0, 90.0, 50, -90.0, 90.0)
+                20, -90.0, 90.0, 20, -90.0, 90.0)
         h2_ltTwinMuxOut_dirLoc_phi[i].GetXaxis().SetTitle('Data.ltTwinMuxOut_dirLoc_phi')
         h2_ltTwinMuxOut_dirLoc_phi[i].GetYaxis().SetTitle('Emul.ltTwinMuxOut_dirLoc_phi')
         h2_ltTwinMuxOut_dirLoc_phi[i].Sumw2()
@@ -296,7 +295,6 @@ def compareDataEmul(args):
 
     f_out.Write()
     f_out.Close()
-    print "End "+str(inFile)
 
 def drawHist(inFile, outDir):
     utils.setChamberName()

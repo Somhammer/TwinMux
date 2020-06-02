@@ -8,6 +8,7 @@ import multiprocessing as mp
 import argparse
 import subprocess
 
+from tqdm import tqdm
 from ROOT import *
 
 import compare as cp
@@ -16,6 +17,7 @@ import utils
 
 if __name__ == '__main__':
     start_time = time.time()
+    gROOT.ProcessLine("gErrorIgnoreLevel = kFatal;")
 
     parser = argparse.ArgumentParser(description="""
         Comparing TwinMuxOut between unpacked data and emulated one.
@@ -58,30 +60,40 @@ if __name__ == '__main__':
     print list_emulDir
 
     if args.full:
-        list_input = []
+        list_data= []
+        list_emul = []
         for index, item_dir in enumerate(list_dataDir):
+            if index > 1: continue
+            print item_dir
             for item in os.listdir(item_dir):
                 emulFile = item[:item.rfind('_')]+'_Emulator_'+item[:-5].split('_')[-1]+'.root' 
                 if not os.path.exists(list_emulDir[index]+'/'+emulFile):
                     print list_emulDir[index]+'/'+emulFile + "does not exist"
-                list_input.append(item)
+                list_data.append(item)
+                list_emul.append(emulFile)
            
             if args.compare:
                 pool = mp.Pool(processes=50)
-                pool.map(cp.compareDataEmul, [utils.argParser(item_dir, list_emulDir[index], item, outDir, True) for item in list_input])
+                with tqdm(total=len(list_data)) as pbar:
+                    for _ in pool.imap_unordered(cp.compareDataEmul, [utils.argParser(item_dir, list_emulDir[index], item, outDir, True) for item in list_data]):
+                        pbar.update()
                 pool.close()
                 pool.join()
+            # NEED TO FIX
             if args.efficiency:
                 pool = mp.Pool(processes=50)
-                pool.map(ef.calculateEfficiency, [utils.argParser(item_dir, item, outDir, True) for item in list_input])
+                with tqdm(total=len(list_emul)) as pbar:
+                    for _ in pool.imap_unordered(ef.calculateEfficiency, [utils.argParser(list_emulDir[index], item, outDir, True) for item in list_emul]):
+                        pbar.update()
                 pool.close()
                 pool.join()
        
         if args.compare:
             cmd = ['hadd', str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root'] + glob.glob(outDir+'/comparison/*')
             subprocess.call(cmd)
-        if args.compare:
-            cmd = ['hadd', str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Efficiency.root'] + glob.glob(outDIr+'/efficiency/*')
+        if args.efficiency:
+            cmd = ['hadd', str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Efficiency.root'] + glob.glob(outDir+'/efficiency/*')
+            subprocess.call(cmd)
     else:
         if args.compare:
             cp.compareDataEmul(utils.argParser('./', './', 'DTDPGNtuple_10_3_3_ZMuSkim_2018D.root', outDir, False))
@@ -89,6 +101,18 @@ if __name__ == '__main__':
             ef.calculateEfficiency(utils.argParser('./', 'DTDPGNtuple_10_3_3_ZMuSkim_2018D_Emulator.root',outDir, False))
         
     if args.compare:
-        cp.drawHist(outDir+'/comparison/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root', outDir+'/pdf')
+        cp.drawHist(outDir+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root', outDir+'/pdf')
+    
+    if args.efficiency and args.full:
+        f_eff = TFile.Open(str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Efficiency.root')
+        h_eff = f_eff.Get('h_Efficiency')
+        effInclusive = float(h_eff.GetBinContent(2))/float(h_eff.GetBinContent(1))
+        effRPConly = float(h_eff.GetBinContent(4))/float(h_eff.GetBinContent(3))
+        print '\n==== Inclusive ===='
+        print 'Nume: '+str(h_eff.GetBinContent(2))+', Deno: '+str(h_eff.GetBinContent(1))+\
+                ', Efficiency: '+str(effInclusive)
+        print '==== RPC only ===='
+        print 'Nume: '+str(h_eff.GetBinContent(4))+', Deno: '+str(h_eff.GetBinContent(3))+\
+                ', Efficiency: '+str(effRPConly)
     
     print "Total running time: %s" % (time.time() - start_time)

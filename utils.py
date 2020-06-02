@@ -22,7 +22,6 @@ def str2bool(v):
 
 def argParser(*args):
     arglist = [item for item in args]
-    print arglist
     return arglist
 
 def setChamberName():
