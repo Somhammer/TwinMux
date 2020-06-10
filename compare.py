@@ -430,6 +430,9 @@ def drawHist(inFile, outDir):
         h_ltTwinMuxOut_phi_offdig.Draw('hist')
         wp.Draw('same')
         c.Print(outDir+'/h_ltTwinMuxOut_phi_offDig_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
+        h_ltTwinMuxOut_phi_offdig.SetBinContent(1,0)
+        h_ltTwinMuxOut_phi_offdig.SetBinContent(h_ltTwinMuxOut_phi_offdig.GetNbinsX(),0)
+        c.Print(outDir+'/h_ltTwinMuxOut_phi_offDig_'+utils.name_RPCbit[i]+'2.pdf', 'pdf')
         c.Clear()
 
         h2_ltTwinMuxOut_phiB = f_in.Get('h2_ltTwinMuxOut_phiB_'+str(utils.name_RPCbit[i]))
@@ -449,11 +452,14 @@ def drawHist(inFile, outDir):
         h_ltTwinMuxOut_phiB_offdig.GetYaxis().SetTitle('Off diagonal(%)')
         h_ltTwinMuxOut_phiB_offdig.GetYaxis().SetTitleSize(0.038)
         h_ltTwinMuxOut_phiB_offdig.GetYaxis().SetLabelSize(0.038)
-        h_ltTwinMuxOut_phiB_offdig.GetXaxis().SetTitle('ltTwinMuxOut phi')
+        h_ltTwinMuxOut_phiB_offdig.GetXaxis().SetTitle('ltTwinMuxOut phiB')
         h_ltTwinMuxOut_phiB_offdig.GetXaxis().SetLabelSize(0.025)
         h_ltTwinMuxOut_phiB_offdig.Draw('hist')
         wp.Draw('same')
         c.Print(outDir+'/h_ltTwinMuxOut_phiB_offDig_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
+        h_ltTwinMuxOut_phiB_offdig.SetBinContent(1,0)
+        h_ltTwinMuxOut_phiB_offdig.SetBinContent(h_ltTwinMuxOut_phiB_offdig.GetNbinsX(),0)
+        c.Print(outDir+'/h_ltTwinMuxOut_phiB_offDig_'+utils.name_RPCbit[i]+'2.pdf', 'pdf')
         c.Clear()
  
         h2_ltTwinMuxOut_posLoc_x = f_in.Get('h2_ltTwinMuxOut_posLoc_x_'+str(utils.name_RPCbit[i]))
@@ -479,6 +485,9 @@ def drawHist(inFile, outDir):
         h_ltTwinMuxOut_posLoc_x_offdig.Draw('hist')
         wp.Draw('same')
         c.Print(outDir+'/h_ltTwinMuxOut_posLoc_x_offDig_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
+        h_ltTwinMuxOut_posLoc_x_offdig.SetBinContent(1,0)
+        h_ltTwinMuxOut_posLoc_x_offdig.SetBinContent(h_ltTwinMuxOut_posLoc_x_offdig.GetNbinsX(),0)
+        c.Print(outDir+'/h_ltTwinMuxOut_posLoc_x_offDig_'+utils.name_RPCbit[i]+'2.pdf', 'pdf')
         c.Clear()
 
         h2_ltTwinMuxOut_dirLoc_phi = f_in.Get('h2_ltTwinMuxOut_dirLoc_phi_'+str(utils.name_RPCbit[i]))
@@ -503,6 +512,9 @@ def drawHist(inFile, outDir):
         h_ltTwinMuxOut_dirLoc_phi_offdig.Draw('hist')
         wp.Draw('same')
         c.Print(outDir+'/h_ltTwinMuxOut_dirLoc_phi_offDig_'+utils.name_RPCbit[i]+'.pdf', 'pdf')
+        h_ltTwinMuxOut_dirLoc_phi_offdig.SetBinContent(1,0)
+        h_ltTwinMuxOut_dirLoc_phi_offdig.SetBinContent(h_ltTwinMuxOut_dirLoc_phi_offdig.GetNbinsX(),0)
+        c.Print(outDir+'/h_ltTwinMuxOut_dirLoc_phi_offDig_'+utils.name_RPCbit[i]+'2.pdf', 'pdf')
         c.Clear()
   
     for i in range(len(utils.name_RPCbit)):
