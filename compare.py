@@ -27,7 +27,8 @@ def compareDataEmul(args):
     DTTREE_data.Add(dataDir+'/'+inFile)
 
     if '2018D_' in inFile:
-        emulFile = inFile[:inFile.rfind('_')]+'_Emulator_'+inFile[:-5].split('_')[-1]+'.root'
+        emulFile = 'DTDPGNtuple_10_3_3_ZMuSkim_2018D_Emulator_nearWheel.root'
+        #emulFile = inFile[:inFile.rfind('_')]+'_Emulator_'+inFile[:-5].split('_')[-1]+'.root'
     else:
         emulFile = inFile[:-5]+'_Emulator.root'
     DTTREE_emul = TChain('dtNtupleProducer/DTTREE')

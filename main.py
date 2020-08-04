@@ -96,12 +96,12 @@ if __name__ == '__main__':
             subprocess.call(cmd)
     else:
         if args.compare:
-            cp.compareDataEmul(utils.argParser('./', './', 'DTDPGNtuple_10_3_3_ZMuSkim_2018D.root', outDir, False))
+            cp.compareDataEmul(utils.argParser('./', './', 'DTDPGNtuple_10_3_3_ZMuSkim_2018D_Emulator.root', outDir, False))
         if args.efficiency:
             ef.calculateEfficiency(utils.argParser('./', 'DTDPGNtuple_10_3_3_ZMuSkim_2018D_Emulator.root',outDir, False))
         
     if args.compare:
-        cp.drawHist(outDir+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Comparison.root', outDir+'/pdf')
+        cp.drawHist(outDir+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Emulator_Comparison.root', outDir+'/pdf')
     
     if args.efficiency and args.full:
         f_eff = TFile.Open(str(outDir)+'/DTDPGNtuple_10_3_3_ZMuSkim_2018D_Efficiency.root')

@@ -21,10 +21,19 @@ def calculateEfficiency(args):#(emulDir, inFile, outDir):
     DTTREE.Add(inputDir+'/'+inFile)
     f_out.cd()
 
-    h_SegVsTwinMux_dPhi = TH1D('h_SegVsTwinMux_dPhi', 'Segment vs TwinMux dPhi', 100, -2000.0, 2000.0)
-    h_SegVsTwinMux_dPhi.GetXaxis().SetTitle('#Delta phi_{Seg,TwinMux}')
-    h_SegVsTwinMux_dPhi.GetYaxis().SetTitle('Entries')
-    h_SegVsTwinMux_dPhi.Sumw2()
+    listDPhi  = []
+    listDPhiB = []
+    for RPCbit in range(0,3):
+        tmp = TH1D('h_SegVsPrimitive_dPhi_RPCbit'+str(RPCbit), 'DT Segment vs TwinMux Primitive dPhi', 100, -2000.0, 2000.0)
+        tmp.GetXaxis().SetTitle('#Delta phi_{Seg,Pri}')
+        tmp.GetYaxis().SetTitle('Entries, RPCbit = '+str(RPCbit))
+        tmp.Sumw2()
+        listDPhi.append(tmp)
+        tmp = TH1D('h_SegVsPrimitive_dPhiB_RPCbit'+str(RPCbit), 'DT Segment vs TwinMux Primitive dPhiB', 100, -2000.0, 2000.0)
+        tmp.GetXaxis().SetTitle('#Delta phiB_{Seg,Pri}')
+        tmp.GetYaxis().SetTitle('Entries, RPCbit = '+str(RPCbit))
+        tmp.Sumw2()
+        listDPhiB.append(tmp)
 
     h_Efficiency = TH1D('h_Efficiency', 'The efficiency of trigger primitives', 4, 0, 4)
     h_Efficiency.GetXaxis().SetTitle("")
@@ -60,8 +69,11 @@ def calculateEfficiency(args):#(emulDir, inFile, outDir):
                     isSameDetector = True
                 
                 if isSameDetector and isBX0:
+                    RPCbit = DTTREE.ltTwinMuxOut_rpcBit[itrig]
                     deltaPhi = DTTREE.seg_posGlb_phi[iseg] - DTTREE.ltTwinMuxOut_phi[itrig]
-                    h_SegVsTwinMux_dPhi.Fill(deltaPhi)
+                    deltaPhiB = (DTTREE.seg_dirGlb_phi[iseg] - DTTREE.seg_posGlb_phi[iseg]) - DTTREE.ltTwinMuxOut_phiB[itrig]
+                    listDPhi[RPCbit].Fill(deltaPhi)
+                    listDPhiB[RPCbit].Fill(deltaPhiB)
                 
                 if DTTREE.seg_station[iseg] <= 2 and isSameDetector and isBX0:
                     h_Efficiency.Fill(0,1)
@@ -88,7 +100,7 @@ def calculateEfficiency(args):#(emulDir, inFile, outDir):
                 
     if not multiProcess:
         effInclusive = float(h_Efficiency.GetBinContent(2))/float(h_Efficiency.GetBinContent(1))
-        effRPConly = float(h_Efficiency.GetBinContent(1))/float(h_Efficiency.GetBinContent(3))
+        effRPConly = float(h_Efficiency.GetBinContent(4))/float(h_Efficiency.GetBinContent(3))
         print '\n==== Inclusive ===='
         print 'Nume: '+str(h_Efficiency.GetBinContent(2))+', Deno: '+str(h_Efficiency.GetBinContent(1))+', Efficiency: '+str(effInclusive)
         print '==== RPC only ===='
